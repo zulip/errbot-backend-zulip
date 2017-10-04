@@ -1,0 +1,6 @@
+[Core]
+Name = Zulip
+Module = zulip
+
+[Documentation]
+Description = This is the Zulip backend for Err.
