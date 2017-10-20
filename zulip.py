@@ -12,7 +12,7 @@ log = logging.getLogger('errbot.backends.zulip')
 ZULIP_MESSAGE_SIZE_LIMIT = 10000
 
 try:
-    import zulip
+    from zulip import Client
 except ImportError:
     log.exception("Could not start the Zulip back-end")
     log.fatal(
@@ -181,9 +181,9 @@ class ZulipBackend(ErrBot):
 
         compact = config.COMPACT_OUTPUT if hasattr(config, 'COMPACT_OUTPUT') else False
         enable_format('text', TEXT_CHRS, borders=not compact)
-        self.client = zulip.Client(email=self.identity['email'],
-                                   api_key=self.identity['key'],
-                                   site=self.identity['site'])
+        self.client = Client(email=self.identity['email'],
+                             api_key=self.identity['key'],
+                             site=self.identity['site'])
 
     def serve_once(self):
         self.bot_identifier = self.build_identifier(self.client.email)
