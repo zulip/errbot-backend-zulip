@@ -35,6 +35,7 @@ Setup
        'key': '<abcdefghijklmnopqrstuvwxyz123456>',
        'site': '<http://your.zulip.server>'
    }
+   BOT_ADMINS = ('<your@email.address',)
    CHATROOM_PRESENCE = ()
    BOT_PREFIX = '<@**err-bot@your.zulip.server**>'  # This configuration enables errbot to respond to @-mentions
    ```
