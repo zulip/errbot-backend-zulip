@@ -5,6 +5,7 @@ from errbot.backends.base import RoomError, Identifier, Person, RoomOccupant, St
 from errbot.core import ErrBot
 from errbot.rendering.ansiext import enable_format, TEXT_CHRS
 
+from urllib.parse import quote
 
 # Can't use __name__ because of Yapsy.
 log = logging.getLogger('errbot.backends.zulip')
@@ -243,6 +244,14 @@ class ZulipBackend(ErrBot):
                 room=room
             )
             message_instance.to = room
+            message_instance.extras['url'] = (
+                '{site}/#narrow/stream/{stream}'
+                '/subject/{subject}/near/{mid}').format(
+                    site=self.identity['site'],
+                    stream=quote(room.title),
+                    subject=quote(room.subject),
+                    mid=message['id'],
+            )
         else:
             raise ValueError("Invalid message type `{}`.".format(message['type']))
         self.callback_message(message_instance)
