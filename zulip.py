@@ -234,7 +234,8 @@ class ZulipBackend(ErrBot):
             room = ZulipRoom(
                 id=message['display_recipient'],
                 title=message['display_recipient'],
-                subject=message['subject']
+                subject=message['subject'],
+                client=self.client,
             )
             message_instance.frm = ZulipRoomOccupant(
                 id=message['sender_email'],
