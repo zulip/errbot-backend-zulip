@@ -219,13 +219,13 @@ class ZulipBackend(ErrBot):
         message_instance = self.build_message(message['content'])
         if message['type'] == 'private':
             message_instance.frm = ZulipPerson(
-                id=message['sender_email'],
+                id=message['sender_id'],
                 full_name=message['sender_full_name'],
                 emails=[message['sender_email']],
                 client=message['client']
             )
             message_instance.to = ZulipPerson(
-                id=message['sender_email'],
+                id=message['sender_id'],
                 full_name=','.join([recipient['full_name'] for recipient in message['display_recipient']]),
                 emails=[recipient['email'] for recipient in message['display_recipient']],
                 client=None
@@ -238,7 +238,7 @@ class ZulipBackend(ErrBot):
                 client=self.client,
             )
             message_instance.frm = ZulipRoomOccupant(
-                id=message['sender_email'],
+                id=message['sender_id'],
                 full_name=message['sender_full_name'],
                 emails=[message['sender_email']],
                 client=message['client'],
