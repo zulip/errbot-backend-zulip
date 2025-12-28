@@ -6,6 +6,7 @@ from errbot.core import ErrBot
 from errbot.rendering.ansiext import enable_format, TEXT_CHRS
 
 from urllib.parse import quote
+import re
 
 # Can't use __name__ because of Yapsy.
 log = logging.getLogger('errbot.backends.zulip')
@@ -293,11 +294,111 @@ class ZulipBackend(ErrBot):
         # At this time, Zulip doesn't support active presence change.
         pass
 
+    @staticmethod
+    def check_email(email):
+        regex_email = re.compile(r'^.+@([?)[a-zA-Z0-9-.]+.([a-zA-Z]{2,3}|[0-9]{1,3})(]?))$')
+        if regex_email.match(email) != None:
+            return True
+        else:
+            return False
+
+    def extract_identifiers_from_string(self, text):
+        """
+        extract username streamname topicname from text
+        :param text:
+        :return username streamname topicname:
+        """
+
+        exception_message = (
+            'Unparseable zulip identifier, should be of the format `#{{stream}}*{{topic}}`,'
+            '`@U12345`. (Got `%s`)'
+        )
+        text = text.strip()
+
+        if text == '':
+            raise ValueError(exception_message % '')
+
+        username = None
+        streamname = None
+        topicname = None
+
+        regex_str_stream = r'#{{(.*)}}$'
+        regex_str_topic = r'\*{{(.*)}}$'
+        regex_str_user = r'@{{(.*)}}$'
+
+        regex_stream = re.compile(regex_str_stream)
+        regex_topic = re.compile(regex_str_topic)
+        regex_user = re.compile(regex_str_user)
+
+        if self.check_email(text):
+            username = text
+
+        if text[0] == "#":
+            if '*{{' in text:
+                tmp_text = text.split('*{{')
+                try:
+                    tmp_text[1] = '*{{' + tmp_text[1]
+                except Exception as e:
+                    pass
+                re_res = regex_stream.search(tmp_text[0])
+                if re_res:
+                    if len(re_res.groups()) > 0:
+                        streamname = re_res[1]
+                re_res = regex_topic.search(tmp_text[1])
+                if re_res:
+                    if len(re_res.groups()) > 0:
+                        topicname = re_res[1]
+            else:
+                re_res = regex_stream.search(text)
+                if re_res:
+                    if len(re_res.groups()) > 0:
+                        streamname = re_res[1]
+        elif text[0] == '@':
+            if text[1] != '{':
+                username= text
+            else:
+                re_res = regex_user.search(text)
+                if re_res:
+                    if len(re_res.groups()) > 0:
+                        username = re_res[1]
+        else:
+            raise ValueError(exception_message % text)
+
+        return username, streamname, topicname
+
     def build_identifier(self, txtrep):
-        return ZulipPerson(id=txtrep,
-                           full_name=txtrep,
-                           emails=[txtrep],
-                           client=self.client)
+
+        log.debug('building an identifier from %s.', txtrep)
+        if self.check_email(txtrep):
+            return ZulipPerson(
+                id=txtrep,
+                full_name=txtrep,
+                emails=[txtrep],
+                client=self.client
+            )
+        username, streamname, topicname = self.extract_identifiers_from_string(txtrep)
+
+        if username:
+            return ZulipPerson(
+                id=txtrep,
+                full_name=txtrep,
+                emails=[txtrep],
+                client=self.client
+            )
+        if streamname and not topicname:
+            return ZulipRoom(
+                id=streamname,
+                title=streamname,
+                subject='',
+                client=self.client,
+            )
+        elif streamname and topicname:
+            return ZulipRoom(
+                id=streamname,
+                title=streamname,
+                subject=topicname,
+                client=self.client,
+            )
 
     def build_reply(self, msg, text=None, private=False, threaded=False):
         response = self.build_message(text)

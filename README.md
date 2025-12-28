@@ -47,3 +47,41 @@ Tips
 ----
 
 * Rooms in ErrBot are streams in Zulip.
+
+Directly send message to room
+----
+when a time you need errbot work like api 
+
+* Example Code
+
+`#{{stream}}*{{topic}}`
+```python
+self.send(
+    self.build_identifier("#{{code_runtime_alert}}*{{hello}}"),
+    "your message here"
+)
+```
+
+* A demo errbot api for log your code exception in a specific zulip room
+
+``` python
+@webhook
+def cra(self, request):
+    self.log.debug(repr(request))
+    if type(request) is dict:
+        # self.log.info(request)
+        if request['type'] == 'exception':
+            response = tenv().get_template('exception.md').render(request)
+            # self.log.info(response)
+            self.send(
+                self.build_identifier("#{{{{{stream}}}}}*{{{{{topic}}}}}".format(
+                    stream=request['stream'],
+                    topic=request['topic']
+                )),
+                response
+            )
+            return "{'status': '100'}"
+    else:
+        return "{'status': '999'}"
+
+```
